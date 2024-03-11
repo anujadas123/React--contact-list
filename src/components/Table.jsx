@@ -3,25 +3,40 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Table from "react-bootstrap/Table";
 import { getContact } from "../Redux/UserDetails";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
 import Delete from "../components/Delete";
-// import Edit from "./Edit";
+import Edit from "../components/Edit";
+import Pagination from "./pagination/Pagination";
 
 const Tables = () => {
   const [showDelete, setShowDelete] = useState(null);
-  // const [selectedContactId, setSelectedContactId] = useState(null);
-
+  const [showEdit, setShowEdit] = useState(null);
+  console.log("edit,,,", showEdit);
   const dispatch = useDispatch();
   const contacts = useSelector((state) => state.app.contacts);
 
-  // const handleDelete = () => {
-  //   dispatch(deleteContact(selectedContactId));
-  //   setShowDelete(false);
-  // };
+  const page = useSelector((state) => state.app.page);
+  const limit = useSelector((state) => state.app.limit);
+  const search = useSelector((state) => state.app.search);
+
+  console.log(page);
+  // console.log(limit)
+  // console.log(search)
+
+  const pageCount = useSelector((state) => state.app.pageCount);
+  console.log(pageCount);
+
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    dispatch(getContact());
-  }, [dispatch]);
+    const data = { page: currentPage, limit, search };
+    dispatch(getContact(data));
+  }, [dispatch, page, limit, search, currentPage]);
+
+  const handlePagination = ({ selected }) => {
+    setCurrentPage(selected + 1);
+  };
+
+  const startIndex = (currentPage - 1) * limit + 1;
 
   return (
     <div className="container">
@@ -38,18 +53,23 @@ const Tables = () => {
           </thead>
           <tbody>
             {Array.isArray(contacts) &&
-              contacts.map((contact, index) => (
+              contacts?.map((contact, index) => (
                 <tr key={index}>
-                  <td>{index + 1}</td>
+                  <td>{startIndex + index}</td>
                   <td>
                     {contact.firstname} {contact.secondname}
                   </td>
                   <td>{contact.phonenumber}</td>
                   <td>{contact.email}</td>
                   <td className="btns">
-                    <Link to={`/Edit/${contact._id}`} className="editbtn">
+                    <button
+                      className="editbtn"
+                      onClick={() => {
+                        setShowEdit(contact._id);
+                      }}
+                    >
                       Edit
-                    </Link>
+                    </button>
                     <button
                       className="deletebtn"
                       onClick={() => {
@@ -65,14 +85,24 @@ const Tables = () => {
           </tbody>
         </Table>
       </div>
+      <Pagination pageCount={pageCount} handlePagination={handlePagination} />
+
       {showDelete && (
         <Delete
-
           deleteModalOpen={() => setShowDelete(true)}
           deleteModalHide={() => setShowDelete(false)}
           deletId={showDelete}
         />
       )}
+
+      {showEdit && (
+        <Edit
+          editModalOpen={() => setShowEdit(true)}
+          editModalHide={() => setShowEdit(false)}
+          editId={showEdit}
+        />
+      )}
+
       {/* <Delete deletId={showDelete} deleteModalHide={() => setShowDelete(false)} /> */}
     </div>
   );
